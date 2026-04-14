@@ -1,0 +1,31 @@
+timestamp,src_ip,dst_ip,attack_type,severity,country,protocol,bytes_sent,bytes_received,duration_sec,status
+2024-01-01 08:12:33,192.168.1.10,10.0.0.1,DDoS,High,Brazil,TCP,150000,500,12,Blocked
+2024-01-01 09:45:10,203.45.67.89,10.0.0.2,SQL Injection,Critical,China,HTTP,2300,18000,3,Blocked
+2024-01-01 10:23:55,172.16.0.5,10.0.0.3,Phishing,Medium,Russia,HTTP,800,12000,1,Detected
+2024-01-01 11:00:00,45.33.32.156,10.0.0.4,Port Scan,Low,USA,TCP,120,0,30,Detected
+2024-01-01 12:15:22,198.51.100.7,10.0.0.1,Brute Force,High,Germany,SSH,500,200,60,Blocked
+2024-01-01 13:30:45,203.45.67.90,10.0.0.5,XSS,Medium,India,HTTP,1500,9000,2,Detected
+2024-01-01 14:22:11,192.168.2.20,10.0.0.2,DDoS,Critical,Brazil,UDP,500000,100,45,Blocked
+2024-01-01 15:05:33,78.46.12.34,10.0.0.6,Ransomware,Critical,Romania,HTTP,25000,150000,120,Blocked
+2024-01-01 16:45:00,192.168.1.15,10.0.0.3,SQL Injection,High,China,HTTP,3100,22000,5,Blocked
+2024-01-01 17:30:12,45.33.32.200,10.0.0.7,Phishing,Medium,Nigeria,HTTP,900,14000,2,Detected
+2024-01-02 08:00:00,203.45.67.91,10.0.0.1,Port Scan,Low,USA,TCP,100,0,25,Detected
+2024-01-02 09:10:55,172.16.0.8,10.0.0.4,Brute Force,High,Russia,SSH,600,300,90,Blocked
+2024-01-02 10:20:30,198.51.100.9,10.0.0.2,DDoS,Critical,China,TCP,800000,200,60,Blocked
+2024-01-02 11:45:00,78.46.12.50,10.0.0.5,XSS,Medium,Germany,HTTP,1200,8500,1,Detected
+2024-01-02 12:30:22,192.168.3.30,10.0.0.6,SQL Injection,High,India,HTTP,2800,19000,4,Blocked
+2024-01-02 13:15:44,45.33.32.210,10.0.0.3,Ransomware,Critical,Romania,HTTP,30000,200000,180,Blocked
+2024-01-02 14:00:11,203.45.67.92,10.0.0.7,Phishing,Low,Brazil,HTTP,700,11000,1,Detected
+2024-01-02 15:25:33,172.16.0.12,10.0.0.1,Port Scan,Low,USA,TCP,110,0,20,Detected
+2024-01-02 16:40:00,198.51.100.15,10.0.0.4,Brute Force,Medium,China,SSH,550,250,75,Blocked
+2024-01-02 17:55:22,192.168.1.25,10.0.0.2,DDoS,High,Russia,UDP,300000,150,30,Blocked
+2024-01-03 08:30:00,78.46.12.60,10.0.0.5,XSS,Medium,India,HTTP,1400,9500,2,Detected
+2024-01-03 09:45:15,45.33.32.220,10.0.0.6,SQL Injection,Critical,China,HTTP,3500,25000,6,Blocked
+2024-01-03 10:15:40,203.45.67.93,10.0.0.3,Ransomware,Critical,Nigeria,HTTP,45000,300000,240,Blocked
+2024-01-03 11:30:00,172.16.0.20,10.0.0.7,Phishing,Medium,Germany,HTTP,850,13000,1,Detected
+2024-01-03 12:00:55,192.168.2.35,10.0.0.1,Port Scan,Low,USA,TCP,130,0,35,Detected
+2024-01-03 13:20:22,198.51.100.20,10.0.0.4,Brute Force,High,Russia,SSH,700,350,120,Blocked
+2024-01-03 14:35:11,78.46.12.70,10.0.0.2,DDoS,High,China,TCP,600000,300,50,Blocked
+2024-01-03 15:50:33,45.33.32.230,10.0.0.5,XSS,Low,Brazil,HTTP,1100,7500,1,Detected
+2024-01-03 16:10,203.45.67.94,10.0.0.6,SQL Injection,Medium,India,HTTP,2100,16000,3,Blocked
+2024-01-03 17:25,172.16.0.25,10.0.0.3,Phishing,High,Romania,HTTP,950,15000,2,Blocked
