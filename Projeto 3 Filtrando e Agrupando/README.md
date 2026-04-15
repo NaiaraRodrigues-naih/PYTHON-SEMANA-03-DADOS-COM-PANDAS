@@ -8,51 +8,13 @@
 
 | | |
 |---|---|
-| **Dashboard SOC (online)** | 🔗 *(link gerado após deploy no Railway — veja abaixo)* |
-| **Dashboard SOC (local)** | [http://localhost:8000](http://localhost:8000) |
+| **Dashboard SOC** | [http://localhost:8000](http://localhost:8000) |
 | **Repositório GitHub** | [github.com/NaiaraRodrigues-naih/PYTHON-SEMANA-03-DADOS-COM-PANDAS](https://github.com/NaiaraRodrigues-naih/PYTHON-SEMANA-03-DADOS-COM-PANDAS) |
 
-> Para acessar localmente, execute:
+> Para acessar o dashboard, execute primeiro:
 > ```bash
 > uvicorn main:app --host 0.0.0.0 --port 8000
 > ```
-
----
-
-## Deploy Online — Railway
-
-O projeto está configurado para deploy automático no **Railway** direto pelo GitHub.
-
-### Passo a passo
-
-**1.** Acesse [railway.app](https://railway.app) e faça login com sua conta GitHub
-
-**2.** Clique em **"New Project"** → **"Deploy from GitHub repo"**
-
-**3.** Selecione o repositório:
-```
-NaiaraRodrigues-naih/PYTHON-SEMANA-03-DADOS-COM-PANDAS
-```
-
-**4.** Quando pedir o diretório raiz, aponte para:
-```
-Projeto 3 Filtrando e Agrupando
-```
-
-**5.** Em **"Variables"**, adicione as três variáveis de ambiente:
-
-| Variável | Valor |
-|---|---|
-| `SOC_USERNAME` | `naiararodrigues` |
-| `SOC_SENHA_HASH` | *(hash bcrypt da sua senha)* |
-| `SOC_SECRET_KEY` | *(chave secreta de 64 caracteres)* |
-
-**6.** Clique em **"Deploy"** — o Railway gera automaticamente um link público como:
-```
-https://soc-dashboard-xxxx.railway.app
-```
-
-> Os arquivos `Procfile` e `railway.json` já estão configurados no repositório.
 
 ---
 
