@@ -4,6 +4,18 @@
 > Curso: kensei Cybersecurity  
 > Tema: Análise de ataques cibernéticos com filtragem, agrupamento e visualização em tempo real
 
+## Acesso ao Sistema
+
+| | |
+|---|---|
+| **Dashboard SOC** | [http://localhost:8000](http://localhost:8000) |
+| **Repositório GitHub** | [github.com/NaiaraRodrigues-naih/PYTHON-SEMANA-03-DADOS-COM-PANDAS](https://github.com/NaiaraRodrigues-naih/PYTHON-SEMANA-03-DADOS-COM-PANDAS) |
+
+> Para acessar o dashboard, execute primeiro:
+> ```bash
+> uvicorn main:app --host 0.0.0.0 --port 8000
+> ```
+
 ---
 
 ## Sobre o Projeto
