@@ -1,0 +1,32 @@
+# Variáveis de ambiente — NUNCA subir para o GitHub
+.env
+.env.local
+.env.*.local
+
+# Banco de dados local
+*.db
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Arquivos de gravação/mídia pessoal
+*.mp4
+*.mov
+*.avi
