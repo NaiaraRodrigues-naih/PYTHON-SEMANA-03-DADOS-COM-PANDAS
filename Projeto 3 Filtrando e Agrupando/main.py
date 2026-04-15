@@ -25,6 +25,7 @@ load_dotenv()
 SECRET   = os.environ["SOC_SECRET_KEY"]
 HASH     = os.environ["SOC_SENHA_HASH"].encode("utf-8")
 USERNAME = os.environ["SOC_USERNAME"]
+PORT     = int(os.environ.get("PORT", 8000))
 
 app = FastAPI(title="SOC Dashboard")
 
