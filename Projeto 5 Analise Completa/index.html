@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NASA NEO — Asteroides Near-Earth</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:       #070b10;
+      --surface:  #0d1520;
+      --card:     #111c2d;
+      --border:   #1e2d42;
+      --accent:   #00c2ff;
+      --orange:   #ff6b2b;
+      --red:      #ff3b5c;
+      --green:    #00e5a0;
+      --muted:    #4a6280;
+      --text:     #cde4f5;
+      --heading:  #e8f4ff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── STARFIELD ── */
+    #stars {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,.7), transparent),
+        radial-gradient(1px 1px at 30% 45%, rgba(255,255,255,.5), transparent),
+        radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,.6), transparent),
+        radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.4), transparent),
+        radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,.7), transparent),
+        radial-gradient(2px 2px at 20% 70%, rgba(255,255,255,.3), transparent),
+        radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,.5), transparent),
+        radial-gradient(1px 1px at 45% 85%, rgba(255,255,255,.4), transparent),
+        radial-gradient(1px 1px at 65% 10%, rgba(255,255,255,.6), transparent),
+        radial-gradient(2px 2px at 5%  90%, rgba(255,255,255,.3), transparent);
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative; z-index: 10;
+      text-align: center;
+      padding: 60px 20px 40px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0,194,255,.05) 0%, transparent 100%);
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(0,194,255,.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: .65rem;
+      letter-spacing: .15em;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    header h1 {
+      font-size: clamp(1.8rem, 5vw, 3.4rem);
+      color: var(--heading);
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    header p {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .85rem;
+      letter-spacing: .05em;
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 6px;
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      position: relative; z-index: 5;
+      max-width: 1340px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    .section-title {
+      font-size: .7rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 52px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── STATS GRID ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .3s, transform .3s;
+    }
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent-color, var(--accent));
+    }
+
+    .stat-label {
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--heading);
+      line-height: 1;
+    }
+
+    .stat-value .unit {
+      font-size: .9rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .stat-sub {
+      margin-top: 6px;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    /* ── CHARTS GRID ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .charts-grid .wide { grid-column: 1 / -1; }
+
+    @media (max-width: 768px) {
+      .charts-grid { grid-template-columns: 1fr; }
+      .charts-grid .wide { grid-column: 1; }
+    }
+
+    /* ── CHART CARD ── */
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      transition: border-color .3s;
+    }
+    .chart-card:hover { border-color: var(--border); }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+      gap: 12px;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--heading);
+      letter-spacing: -.01em;
+    }
+
+    .chart-desc {
+      font-size: .72rem;
+      color: var(--muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 280px;
+    }
+    .chart-wrap.tall { height: 340px; }
+
+    /* ── COUNTDOWN ── */
+    .countdown-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+
+    #next-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    #next-meta {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+
+    .countdown-digits {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .cd-unit {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: center;
+      min-width: 80px;
+    }
+
+    .cd-num {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--heading);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cd-lbl {
+      font-size: .6rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── TABLE ── */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .table-head {
+      padding: 22px 28px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-head .chart-title { margin-bottom: 4px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .78rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 16px;
+      font-size: .6rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      transition: background .2s;
+    }
+    tbody tr:hover { background: rgba(0,194,255,.04); }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 11px 16px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .rank {
+      color: var(--muted);
+      font-size: .68rem;
+    }
+
+    .name-cell {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .danger-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .danger-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .danger-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .tag-past   { background: rgba(0,194,255,.12);  color: var(--accent); }
+    .tag-future { background: rgba(255,107,43,.12); color: var(--orange); }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 5;
+      text-align: center;
+      padding: 28px 20px;
+      border-top: 1px solid var(--border);
+      font-size: .68rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── TICKER ── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: rgba(0,194,255,.05);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 0;
+    }
+
+    .ticker {
+      display: flex;
+      white-space: nowrap;
+      animation: ticker 40s linear infinite;
+    }
+
+    .ticker-item {
+      padding: 0 40px;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    .ticker-item span { color: var(--accent); font-weight: 700; }
+
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="badge">NASA · CNEOS · JPL · Dados atualizados ate 2025</div>
+  <h1>ASTEROIDES<br/><span>NEAR-EARTH</span></h1>
+  <p><span class="live-dot"></span>Dashboard interativo · Pipeline de dados com Python & Pandas</p>
+</header>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="section-title">indicadores gerais</div>
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-color: var(--accent)">
+      <div class="stat-label">Total de NEOs catalogados</div>
+      <div class="stat-value" id="s-neo">0</div>
+      <div class="stat-sub">asteroides Near-Earth conhecidos</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--red)">
+      <div class="stat-label">Potencialmente Perigosos</div>
+      <div class="stat-value" id="s-pha" style="color:var(--red)">0</div>
+      <div class="stat-sub">PHA — diâmetro > 140 m, dist &lt; 0.05 UA</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--orange)">
+      <div class="stat-label">Aproximações registradas</div>
+      <div class="stat-value" id="s-ca">0</div>
+      <div class="stat-sub">eventos 2015–2035</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--red)">
+      <div class="stat-label">Passaram &lt; 1 Dist. Lunar</div>
+      <div class="stat-value" id="s-1ld" style="color:var(--orange)">0</div>
+      <div class="stat-sub">1 LD = 384.400 km</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--green)">
+      <div class="stat-label">Distância mínima registrada</div>
+      <div class="stat-value" id="s-dist">0 <span class="unit">km</span></div>
+      <div class="stat-sub">2025 UC11 · outubro 2025</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent)">
+      <div class="stat-label">Velocidade máxima</div>
+      <div class="stat-value">40.2 <span class="unit">km/s</span></div>
+      <div class="stat-sub">~144.000 km/h</div>
+    </div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div class="section-title">próxima aproximação confirmada</div>
+  <div class="countdown-block">
+    <div id="next-name">Carregando...</div>
+    <div id="next-meta"></div>
+    <div class="countdown-digits">
+      <div class="cd-unit"><div class="cd-num" id="cd-d">--</div><div class="cd-lbl">dias</div></div>
+      <div class="cd-unit"><div class="cd-num" id="cd-h">--</div><div class="cd-lbl">horas</div></div>
+      <div class="cd-unit"><div class="cd-num" id="cd-m">--</div><div class="cd-lbl">min</div></div>
+      <div class="cd-unit"><div class="cd-num" id="cd-s">--</div><div class="cd-lbl">seg</div></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="section-title">aproximações por ano</div>
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">Aproximações à Terra · 2015–2035</div>
+          <div class="chart-desc">
+            Barras azuis = eventos históricos registrados. Barras laranja = previsões calculadas.
+            O crescimento até 2025 reflete o avanço dos telescópios de detecção — mais objetos descobertos, não mais asteroides.
+            A queda após 2025 indica que as previsões de longo prazo ainda não estão completamente calculadas.
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart-ano"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="section-title">perfil dos asteroides NEO</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Distribuição por Tamanho</div>
+      <div class="chart-desc">
+        Maioria dos NEOs são objetos pequenos (25–140 m) — suficientes para danos locais.
+        Os 941 "City Killers" (> 1 km) são todos monitorados continuamente pela NASA.
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart-size"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Classe Orbital (PHA vs Não-PHA)</div>
+      <div class="chart-desc">
+        Classe Apolo domina: cruzam a órbita da Terra e concentram a maior parte dos PHAs.
+        Classe AMO são próximos mas não cruzam. ATE têm órbitas menores que a Terra.
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart-class"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 3 -->
+  <div class="section-title">análise de distâncias e velocidades</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Distribuição de Distâncias (em LD)</div>
+      <div class="chart-desc">
+        Quanto mais à esquerda, mais próximo da Terra. A linha vermelha marca 1 distância lunar —
+        limiar de atenção para PHAs. A maioria das aproximações ocorre entre 5 e 20 LD.
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart-dist"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Velocidade Média por Ano (km/s)</div>
+      <div class="chart-desc">
+        A velocidade média mantém-se estável (~10.5 km/s) ao longo dos anos, indicando que
+        não há viés de seleção temporal — detectamos asteroides de velocidades semelhantes em todos os períodos.
+      </div>
+      <div class="chart-wrap">
+        <canvas id="chart-vel"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section-title">top 20 mais próximos da Terra</div>
+  <div class="table-card">
+    <div class="table-head">
+      <div class="chart-title">Aproximações mais Perigosas (2015–2035)</div>
+      <div class="chart-desc" style="margin:4px 0 0">
+        Ordenados por distância mínima. Nenhum representou risco real de colisão — suas órbitas foram calculadas com precisão.
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="tbl-top"></table>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  Dados: <a href="https://www.kaggle.com/datasets/darkmatternet/nasa-near-earth-asteroids-and-close-approaches" target="_blank">Kaggle · NASA CNEOS</a>
+  &nbsp;·&nbsp; Pipeline: Python · Pandas · Matplotlib
+  &nbsp;·&nbsp; Projeto de análise de dados — Semana 3
+</footer>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const STATS = {"total_neo":41281,"total_ca":27430,"pha_count":2539,"menos1ld":1221,"min_dist_km":6599,"max_vel":40.19,"mean_vel":10.56,"objeto_mais_proximo":"(2025 UC11)"};
+
+const POR_ANO = [{"year":2015,"n":1127},{"year":2016,"n":1421},{"year":2017,"n":1570},{"year":2018,"n":1657},{"year":2019,"n":1938},{"year":2020,"n":2337},{"year":2021,"n":2501},{"year":2022,"n":2607},{"year":2023,"n":2521},{"year":2024,"n":2504},{"year":2025,"n":2661},{"year":2026,"n":1039},{"year":2027,"n":435},{"year":2028,"n":443},{"year":2029,"n":396},{"year":2030,"n":406},{"year":2031,"n":367},{"year":2032,"n":385},{"year":2033,"n":374},{"year":2034,"n":378},{"year":2035,"n":363}];
+
+const SIZE_CAT = {"Tiny (<25m)":10460,"Small (25-140m)":19154,"Medium (140m-1km)":10726,"Large (>1km)":941};
+
+const CLASSES = {"APO":23484,"AMO":14408,"ATE":3351,"IEO":38};
+const CLASSES_PHA = {"APO":1821,"AMO":298,"ATE":420,"IEO":0};
+
+const DIST_HIST = {"0-2":2395,"2-4":2100,"4-6":1894,"6-8":1736,"8-10":1615,"10-12":1566,"12-14":1448,"14-16":1364,"16-18":1284,"18-20":1302,"20-22":1223,"22-24":1171,"24-26":1195,"26-28":1075,"28-30":1138,"30-32":1108,"32-34":1098,"34-36":1079,"36-38":1126,"38-40":513};
+
+const VEL_ANO = {"2015":10.45,"2016":10.53,"2017":10.46,"2018":10.5,"2019":10.54,"2020":10.41,"2021":10.44,"2022":10.63,"2023":10.59,"2024":10.68,"2025":10.77,"2026":10.71,"2027":10.34,"2028":10.58,"2029":10.22,"2030":10.53,"2031":10.78,"2032":10.76,"2033":10.47,"2034":10.97,"2035":9.8};
+
+const TOP20 = [{"full_name":"(2025 UC11)","close_approach_date":"2025-10-30","dist_km":6599,"dist_lunar":0.02,"velocity_km_s":11.36,"is_future":false},{"full_name":"(2020 VT4)","close_approach_date":"2020-11-13","dist_km":6746,"dist_lunar":0.02,"velocity_km_s":13.43,"is_future":false},{"full_name":"(2025 TF)","close_approach_date":"2025-10-01","dist_km":6780,"dist_lunar":0.02,"velocity_km_s":20.88,"is_future":false},{"full_name":"(2024 XA)","close_approach_date":"2024-12-01","dist_km":7726,"dist_lunar":0.02,"velocity_km_s":13.57,"is_future":false},{"full_name":"(2024 LH1)","close_approach_date":"2024-06-06","dist_km":8098,"dist_lunar":0.02,"velocity_km_s":17.40,"is_future":false},{"full_name":"(2024 UG9)","close_approach_date":"2024-10-30","dist_km":8850,"dist_lunar":0.02,"velocity_km_s":20.30,"is_future":false},{"full_name":"(2020 QG)","close_approach_date":"2020-08-16","dist_km":9317,"dist_lunar":0.02,"velocity_km_s":12.33,"is_future":false},{"full_name":"(2021 UA1)","close_approach_date":"2021-10-25","dist_km":9427,"dist_lunar":0.02,"velocity_km_s":15.84,"is_future":false},{"full_name":"(2023 BU)","close_approach_date":"2023-01-27","dist_km":9967,"dist_lunar":0.03,"velocity_km_s":9.27,"is_future":false},{"full_name":"(2025 OS)","close_approach_date":"2025-07-19","dist_km":10457,"dist_lunar":0.03,"velocity_km_s":12.70,"is_future":false},{"full_name":"(2023 RS)","close_approach_date":"2023-09-07","dist_km":10361,"dist_lunar":0.03,"velocity_km_s":13.59,"is_future":false},{"full_name":"(2025 TQ2)","close_approach_date":"2025-10-02","dist_km":11239,"dist_lunar":0.03,"velocity_km_s":14.71,"is_future":false},{"full_name":"(2025 UW107)","close_approach_date":"2025-10-19","dist_km":12281,"dist_lunar":0.03,"velocity_km_s":16.69,"is_future":false},{"full_name":"(2020 CD3)","close_approach_date":"2019-04-04","dist_km":13104,"dist_lunar":0.03,"velocity_km_s":7.77,"is_future":false},{"full_name":"(2019 UN13)","close_approach_date":"2019-10-31","dist_km":12613,"dist_lunar":0.03,"velocity_km_s":12.85,"is_future":false},{"full_name":"(2020 JJ)","close_approach_date":"2020-05-04","dist_km":13404,"dist_lunar":0.03,"velocity_km_s":14.36,"is_future":false},{"full_name":"(2023 UR10)","close_approach_date":"2023-10-20","dist_km":13949,"dist_lunar":0.04,"velocity_km_s":12.21,"is_future":false},{"full_name":"(2025 BP6)","close_approach_date":"2025-01-26","dist_km":9712,"dist_lunar":0.03,"velocity_km_s":21.05,"is_future":false},{"full_name":"(2021 SP)","close_approach_date":"2021-09-17","dist_km":14103,"dist_lunar":0.04,"velocity_km_s":14.37,"is_future":false},{"full_name":"(2024 HA)","close_approach_date":"2024-04-16","dist_km":15555,"dist_lunar":0.04,"velocity_km_s":19.46,"is_future":false}];
+
+const FUTUROS = [{"full_name":"(2026 FG4)","close_approach_date":"2026-03-25T13:51:00","dist_km":1784467,"dist_lunar":4.64,"velocity_km_s":10.87},{"full_name":"(2026 FB4)","close_approach_date":"2026-03-26T20:48:00","dist_km":649770,"dist_lunar":1.69,"velocity_km_s":10.43},{"full_name":"(2026 FU2)","close_approach_date":"2026-03-28T23:15:00","dist_km":925602,"dist_lunar":2.41,"velocity_km_s":13.20}];
+
+// ── CHART DEFAULTS ────────────────────────────────────────────────────────────
+Chart.defaults.color          = '#4a6280';
+Chart.defaults.borderColor    = '#1e2d42';
+Chart.defaults.font.family    = "'Courier New', monospace";
+Chart.defaults.font.size      = 11;
+
+// ── ANIMATED COUNTER ─────────────────────────────────────────────────────────
+function animCount(el, target, suffix = '', duration = 1800) {
+  let start = null;
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.floor(ease * target).toLocaleString('pt-BR') + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+window.addEventListener('load', () => {
+  animCount(document.getElementById('s-neo'),  41281);
+  animCount(document.getElementById('s-pha'),   2539);
+  animCount(document.getElementById('s-ca'),   27430);
+  animCount(document.getElementById('s-1ld'),   1221);
+  animCount(document.getElementById('s-dist'),  6599, ' km');
+});
+
+// ── TICKER ───────────────────────────────────────────────────────────────────
+const tickerItems = [
+  '🟢 Próximo evento: <span>(2026 FG4)</span> · 25 Mar 2026 · 1.784.467 km · 4.64 LD',
+  '☄️ Mais próximo já registrado: <span>(2025 UC11)</span> · 6.599 km da Terra',
+  '📡 Total de NEOs catalogados: <span>41.281</span> asteroides',
+  '⚠️ PHAs monitorados: <span>2.539</span> objetos potencialmente perigosos',
+  '🚀 Velocidade máxima registrada: <span>40.2 km/s</span> (~144.000 km/h)',
+  '🌙 Aproximações < 1 Distância Lunar: <span>1.221 eventos</span> (2015–2035)',
+  '🔭 Dados: NASA CNEOS · JPL Small-Body Database · Kaggle',
+];
+
+const t = document.getElementById('ticker');
+const full = [...tickerItems, ...tickerItems].map(s =>
+  `<span class="ticker-item">${s} &nbsp;&nbsp;·&nbsp;&nbsp; </span>`
+).join('');
+t.innerHTML = full;
+
+// ── COUNTDOWN ────────────────────────────────────────────────────────────────
+(function() {
+  const next = FUTUROS[0];
+  const target = new Date(next.close_approach_date);
+  document.getElementById('next-name').textContent = next.full_name;
+  document.getElementById('next-meta').textContent =
+    `${target.toLocaleString('pt-BR')} · ${next.dist_km.toLocaleString('pt-BR')} km · ${next.dist_lunar} LD · ${next.velocity_km_s} km/s`;
+
+  function tick() {
+    const now  = new Date();
+    const diff = target - now;
+    if (diff <= 0) {
+      document.getElementById('cd-d').textContent = '00';
+      document.getElementById('cd-h').textContent = '00';
+      document.getElementById('cd-m').textContent = '00';
+      document.getElementById('cd-s').textContent = '00';
+      return;
+    }
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000) / 60000);
+    const secs  = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cd-d').textContent = String(days).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(hours).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(mins).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(secs).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+// ── CHART 1 — APROXIMAÇÕES POR ANO ───────────────────────────────────────────
+new Chart(document.getElementById('chart-ano'), {
+  type: 'bar',
+  data: {
+    labels: POR_ANO.map(d => d.year),
+    datasets: [{
+      label: 'Registrado',
+      data: POR_ANO.filter(d => d.year <= 2025).map(d => d.n),
+      backgroundColor: 'rgba(0,194,255,.75)',
+      borderColor: 'rgba(0,194,255,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    },{
+      label: 'Previsto',
+      data: POR_ANO.map(d => d.year > 2025 ? d.n : null),
+      backgroundColor: 'rgba(255,107,43,.7)',
+      borderColor: 'rgba(255,107,43,1)',
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#4a6280', boxWidth: 12 } } },
+    scales: {
+      x: { stacked: false, grid: { display: false } },
+      y: {
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { callback: v => v.toLocaleString('pt-BR') }
+      }
+    }
+  }
+});
+
+// ── CHART 2 — SIZE CATEGORY ──────────────────────────────────────────────────
+new Chart(document.getElementById('chart-size'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(SIZE_CAT),
+    datasets: [{
+      data: Object.values(SIZE_CAT),
+      backgroundColor: ['rgba(0,229,160,.8)','rgba(0,194,255,.8)','rgba(255,107,43,.8)','rgba(255,59,92,.85)'],
+      borderColor: '#111c2d',
+      borderWidth: 3,
+      hoverOffset: 10,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '60%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { color: '#4a6280', boxWidth: 12, padding: 14, font: { size: 10 } }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('pt-BR')}`
+        }
+      }
+    }
+  }
+});
+
+// ── CHART 3 — CLASSES ORBITAIS (STACKED) ─────────────────────────────────────
+const classLabels = ['Apolo (APO)', 'Amor (AMO)', 'Aten (ATE)', 'Atira (IEO)'];
+const classKeys   = ['APO','AMO','ATE','IEO'];
+const classTotal  = classKeys.map(k => CLASSES[k]);
+const classPHA    = classKeys.map(k => CLASSES_PHA[k]);
+const classNoPHA  = classKeys.map((k,i) => CLASSES[k] - CLASSES_PHA[k]);
+
+new Chart(document.getElementById('chart-class'), {
+  type: 'bar',
+  data: {
+    labels: classLabels,
+    datasets: [
+      { label: 'Não-PHA', data: classNoPHA, backgroundColor: 'rgba(0,194,255,.7)', borderRadius: 4 },
+      { label: 'PHA',     data: classPHA,   backgroundColor: 'rgba(255,59,92,.8)', borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#4a6280', boxWidth: 12 } } },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, grid: { color: 'rgba(255,255,255,.04)' },
+           ticks: { callback: v => v.toLocaleString('pt-BR') } }
+    }
+  }
+});
+
+// ── CHART 4 — DIST HISTOGRAM ─────────────────────────────────────────────────
+new Chart(document.getElementById('chart-dist'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(DIST_HIST).map(k => k + ' LD'),
+    datasets: [{
+      label: 'Aproximações',
+      data: Object.values(DIST_HIST),
+      backgroundColor: ctx => ctx.dataIndex === 0
+        ? 'rgba(255,59,92,.85)'
+        : 'rgba(0,194,255,.55)',
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      annotation: {}
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 9 } } },
+      y: { grid: { color: 'rgba(255,255,255,.04)' } }
+    }
+  }
+});
+
+// ── CHART 5 — VELOCIDADE POR ANO ─────────────────────────────────────────────
+new Chart(document.getElementById('chart-vel'), {
+  type: 'line',
+  data: {
+    labels: Object.keys(VEL_ANO),
+    datasets: [{
+      label: 'Velocidade média (km/s)',
+      data: Object.values(VEL_ANO),
+      borderColor: '#00e5a0',
+      backgroundColor: 'rgba(0,229,160,.08)',
+      borderWidth: 2,
+      pointBackgroundColor: '#00e5a0',
+      pointRadius: 4,
+      tension: .35,
+      fill: true,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: {
+        min: 9, max: 12,
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { callback: v => v + ' km/s' }
+      }
+    }
+  }
+});
+
+// ── TABLE TOP 20 ─────────────────────────────────────────────────────────────
+(function() {
+  const maxDist = Math.max(...TOP20.map(r => r.dist_km));
+  const tbl = document.getElementById('tbl-top');
+  tbl.innerHTML = `
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Objeto</th>
+        <th>Data</th>
+        <th>Distância (km)</th>
+        <th>Distância</th>
+        <th>Velocidade</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${TOP20.map((r,i) => {
+        const pct = (r.dist_km / maxDist * 100).toFixed(1);
+        const color = r.dist_km < 10000 ? 'var(--red)' : r.dist_km < 50000 ? 'var(--orange)' : 'var(--accent)';
+        return `<tr>
+          <td class="rank">${i+1}</td>
+          <td class="name-cell">${r.full_name}</td>
+          <td>${r.close_approach_date}</td>
+          <td>
+            <div class="danger-bar-wrap">
+              <div class="danger-bar">
+                <div class="danger-fill" style="width:${pct}%;background:${color}"></div>
+              </div>
+              <span style="color:${color};font-weight:700;min-width:80px">${r.dist_km.toLocaleString('pt-BR')} km</span>
+            </div>
+          </td>
+          <td style="color:var(--muted)">${r.dist_lunar} LD</td>
+          <td style="color:var(--heading)">${r.velocity_km_s.toFixed(1)} km/s</td>
+          <td><span class="tag ${r.is_future ? 'tag-future' : 'tag-past'}">${r.is_future ? 'Futuro' : 'Passado'}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>`;
+})();
+</script>
+</body>
+</html>
