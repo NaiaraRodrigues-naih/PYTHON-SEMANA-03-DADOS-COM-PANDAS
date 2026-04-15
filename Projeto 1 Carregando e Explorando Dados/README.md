@@ -56,6 +56,8 @@ O arquivo contém registros de ataques com as seguintes colunas:
 - Gráfico de barras com a quantidade de ataques por tipo (em português)
 - Gráfico salvo automaticamente como `grafico_ataques.png`
 
+![Quantidade de Ataques por Tipo](grafico_ataques.png)
+
 ---
 
 ## Como executar
