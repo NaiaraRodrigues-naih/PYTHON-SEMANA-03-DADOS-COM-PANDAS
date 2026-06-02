@@ -1,0 +1,43 @@
+# Variaveis de ambiente e chaves de API - NUNCA subir
+.env
+.env.local
+.env.production
+*.key
+secrets.json
+credentials.json
+
+# Mantem exemplo sem chaves
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Ambientes virtuais
+venv/
+env/
+.venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Jupyter
+.ipynb_checkpoints/
