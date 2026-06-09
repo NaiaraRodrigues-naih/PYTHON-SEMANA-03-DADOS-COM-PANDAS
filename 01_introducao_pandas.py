@@ -38,3 +38,5 @@ print(df[df["Salario"] > 5000])
 
 print("\n--- Ordenado por salário ---")
 print(df.sort_values("Salario", ascending=False))
+
+
